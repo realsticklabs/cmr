@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Drawing and Save</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid black;
+            margin-top: 20px;
+            cursor: crosshair;
+        }
+        #buttons {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Draw on Canvas and Save</h1>
+    <canvas id="drawingCanvas" width="600" height="400"></canvas>
+    <div id="buttons">
+        <button onclick="saveCanvas('png')">Save as PNG</button>
+        <button onclick="saveCanvas('jpeg')">Save as JPEG</button>
+        <button onclick="clearCanvas()">Clear Canvas</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        // Set initial styles for the brush
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'black';
+
+        // Start drawing
+        canvas.addEventListener('mousedown', () => {
+            isDrawing = true;
+            ctx.beginPath();
+        });
+
+        // Stop drawing
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        // Draw on the canvas
+        canvas.addEventListener('mousemove', (event) => {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        });
+
+        // Clear the canvas
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Save canvas as PNG or JPEG
+        function saveCanvas(format) {
+            const link = document.createElement('a');
+            if (format === 'png') {
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'drawing.png';
+            } else if (format === 'jpeg') {
+                link.href = canvas.toDataURL('image/jpeg');
+                link.download = 'drawing.jpeg';
+            }
+            link.click();
+        }
+    </script>
+</body>
+</html>
