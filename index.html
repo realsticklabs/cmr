@@ -54,8 +54,8 @@
         // Start drawing or fill based on tool
         canvas.addEventListener('mousedown', (event) => {
             const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            const x = Math.floor(event.clientX - rect.left);
+            const y = Math.floor(event.clientY - rect.top);
 
             if (tool === 'brush') {
                 isDrawing = true;
@@ -100,7 +100,7 @@
             link.click();
         }
 
-        // Bucket fill (Flood Fill) algorithm
+        // Bucket fill (Flood Fill) algorithm with a queue
         function fillCanvas(x, y, fillColor) {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
@@ -109,11 +109,15 @@
 
             const startPos = (y * width + x) * 4;
             const targetColor = [data[startPos], data[startPos + 1], data[startPos + 2], data[startPos + 3]];
+            const rgbaFill = hexToRGBA(fillColor);
 
-            const fillStack = [[x, y]];
+            // Prevent unnecessary fill if clicked color is the same as the fill color
+            if (colorsMatch(targetColor, rgbaFill)) return;
 
-            while (fillStack.length) {
-                const [px, py] = fillStack.pop();
+            const fillQueue = [[x, y]];
+
+            while (fillQueue.length) {
+                const [px, py] = fillQueue.shift();
                 const pos = (py * width + px) * 4;
 
                 if (px < 0 || py < 0 || px >= width || py >= height) continue;
@@ -121,12 +125,13 @@
                 const currentColor = [data[pos], data[pos + 1], data[pos + 2], data[pos + 3]];
                 if (!colorsMatch(currentColor, targetColor)) continue;
 
-                setPixelColor(data, pos, hexToRGBA(fillColor));
+                setPixelColor(data, pos, rgbaFill);
 
-                fillStack.push([px + 1, py]);
-                fillStack.push([px - 1, py]);
-                fillStack.push([px, py + 1]);
-                fillStack.push([px, py - 1]);
+                // Add neighboring pixels to the queue
+                fillQueue.push([px + 1, py]);
+                fillQueue.push([px - 1, py]);
+                fillQueue.push([px, py + 1]);
+                fillQueue.push([px, py - 1]);
             }
 
             ctx.putImageData(imageData, 0, 0);
@@ -142,7 +147,10 @@
 
         // Check if two colors match
         function colorsMatch(color1, color2) {
-            return color1[0] === color2[0] && color1[1] === color2[1] && color1[2] === color2[2] && color1[3] === color2[3];
+            return Math.abs(color1[0] - color2[0]) < 10 &&
+                   Math.abs(color1[1] - color2[1]) < 10 &&
+                   Math.abs(color1[2] - color2[2]) < 10 &&
+                   Math.abs(color1[3] - color2[3]) < 10; // Allow slight tolerance in comparison
         }
 
         // Convert hex color to RGBA
